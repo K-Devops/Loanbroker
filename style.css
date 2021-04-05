@@ -1,0 +1,58 @@
+
+
+img{
+    max-width: 20em;
+    height: 20em;
+}
+
+.footer{
+    margin-top: 100%;
+    background:lightgrey;
+    height: 10em;
+    border-radius: 0.5em;
+    width: 100%;
+    padding: 2em;
+    align-content: center;
+}
+
+.box {
+    float: left;
+    width: 32%;
+    margin-right: 2%;
+    padding: 20px;
+    background: #eee;
+    box-sizing: border-box;
+   }
+.box:last-child {
+        margin-right: 0;
+   }
+
+
+.upper{
+text-align: right;
+}
+
+
+a:link {
+    color: grey;
+    background-color: transparent;
+    text-decoration: none;
+  }
+  
+  a:visited {
+    color: grey;
+    background-color: transparent;
+    text-decoration: none;
+  }
+  
+  a:hover {
+    color: darkgrey;
+    background-color: transparent;
+    text-decoration: underline;
+  }
+  
+  a:active {
+    color: darkgrey;
+    background-color: transparent;
+    text-decoration: underline;
+  }
