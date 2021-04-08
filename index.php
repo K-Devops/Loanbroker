@@ -115,8 +115,16 @@ if($showFormular) {
                 <input type="email" size="20" maxlength="250" readonly class="form-control-plaintext" id="registeremail" value="Email">
               </div>
               <div class="col-auto">
-                <label for="inputUsername" class="visually-hidden">Email</label>
+                <label for="inputemail2" class="visually-hidden">Email</label>
                 <input type="email" size="20" maxlength="250"class="form-control" id="inputemail2" placeholder="Email" name="email">
+              </div>
+              <div class="col-auto">
+                <label for="staticsozid" class="visually-hidden">Sozialnr:</label>
+                <input type="text" readonly class="form-control-plaintext" id="staticsozid" value="Sozialvers. Nr">
+              </div>
+              <div class="col-auto">
+                <label for="inputsoznummer" class="visually-hidden">sozialversicherungsnummer</label>
+                <input type="text" class="form-control" id="inputsoznummer" placeholder="Soz. Nummer" name="sozialversicherungsnummer">
               </div>
               <div class="col-auto">
                 <label for="registerPasswort" class="visually-hidden">Passwort</label>
