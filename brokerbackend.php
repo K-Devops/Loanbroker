@@ -137,7 +137,7 @@ $curl = curl_init();
 
 curl_setopt_array($curl, [
   CURLOPT_PORT => "7800",
-  CURLOPT_URL => "http://127.0.0.1:7800/restapi/v1/request",
+  CURLOPT_URL => "http://desktop-m8jog38:7800/test2/v1/request",
   CURLOPT_RETURNTRANSFER => true,
   CURLOPT_ENCODING => "",
   CURLOPT_MAXREDIRS => 10,

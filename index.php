@@ -1,8 +1,8 @@
 <?php 
 $user = "root";
-$pass = 'root';
+$pass = 'YES';
 session_start();
-$pdo = new PDO('mysql:host=127.0.0.1;port=8889;dbname=users', $user, $pass);
+$pdo = new PDO('mysql:host=127.0.0.1:3307;dbname=users', $user, $pass);
 
 include('login.php');
 include('register.php');
