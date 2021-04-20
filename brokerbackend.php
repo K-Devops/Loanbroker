@@ -1,9 +1,13 @@
 <?php
+
 $user = 'root';
 $pass = 'root';
 $userinfo = [];
 
+$response;
+
 session_start();
+
 $pdo = new PDO('mysql:host=127.0.0.1;port=8889;dbname=users', $user, $pass);
 
 if (!isset($_SESSION['userid'])) {
@@ -15,12 +19,12 @@ $userid = $_SESSION['userid'];
 
 $sql = 'SELECT * FROM users where id =  ' . $userid;
 foreach ($pdo->query($sql) as $user) {
-    $userinfo = ([
-        "id" => $userid,
+    $userinfo = (["customer" => ["id" => $userid,
         "Vorname" => $user['vorname'],
         "Nachname" => $user['nachname'],
         "email" => $user['email'],
-        "soznr" => $user['Soznr'],
+        "Schufa" => $user['Soznr']],
+
     ]);
 
 }
@@ -79,7 +83,7 @@ foreach ($pdo->query($sql) as $user) {
             <label>Laufzeit:</label>
             </div>
             <div class="col-6 col-sm-3">
-            <input class="form-control" style="width:10em;" type="number"placeholder="12 Monate" name="laufzeit">
+            <input class="form-control" style="width:10em;" type="number"placeholder="12 Monate" name="laufzeit" max="36">
             </div>
             </div>
             <div class="row" style="margin-top:1em">
@@ -98,19 +102,79 @@ foreach ($pdo->query($sql) as $user) {
             </div>
             </div>
     </form></div>
-  <div class="row" style= "margin-top:5em"> <div class="col-4">
-      <h3>Eingegangene Angebote</h3>
-  </div>
-<div class="col-12" id="Message">
-  <!--Hier Nachrichten laden mit?-->
+  <div class="row" style= "margin-top:5em">
+  <h3>Eingegangene Angebote</h3>
+  <span class="border border-1"> <div class="col-4" style="padding:2em">
+  
+     
+  
 
-</div>
 
-  </div>
-
-</body>
 <!--ENDE BODY-->
 
+
+
+<?php
+
+// sendet die Daten nach der Eingabe und dem Absenden an die REST_API im JSON format.
+if (isset($_GET["request"])) {
+    $laufzeit = $_POST['laufzeit'];
+    $summe = $_POST['summe'];
+    $array = ['request' => ['laufzeit' => $laufzeit, 'summe' => $summe]];
+    $userinfo = array_merge($userinfo, $array);
+    $curl = curl_init();
+
+    curl_setopt_array($curl, [
+        CURLOPT_PORT => "8081",
+        CURLOPT_URL => "http://127.0.0.1:8081/api",
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+//CURLOPT_COOKIE, session_name() . '=' . session_id(),
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "POST",
+        CURLOPT_POSTFIELDS => json_encode($userinfo),
+        CURLOPT_HTTPHEADER => [
+
+            "accept: application/json",
+            "content-type: application/json",
+        ],
+    ]);
+
+    $response = curl_exec($curl);
+    $err = curl_error($curl);
+
+    curl_close($curl);
+
+    if ($err) {
+        echo "cURL Error #:" . $err;
+    } else {
+        //echo $response;
+        $responsevalues = json_decode($response);
+
+        
+        echo "Guten Tag Herr ".'<b>'. $responsevalues->customer->Vorname . " " .$responsevalues->customer->Nachname .'</b>' .  " es liegt ein Angebot für Sie vor zu den von Ihnen gewünschten Positionen: ".'</br>';
+        echo "Einer Laufzeit von " . '<b>'. $responsevalues->request->laufzeit . '</b>'." Monaten ". '</br>';
+        echo "und einer Summe von " .'<b>'. $responsevalues->request->summe . '</b>'. " €".'</br>';
+        echo "zu einem Zinsatz von " .'<b>'. round( $responsevalues->customer->Schufa, 2) . '</b>'.  "%".'</br>';
+
+      
+
+ 
+        
+
+       
+        
+    }
+
+}
+?>
+
+</div></span>
+ </div>
+
+</body>
 <footer class="footer">
   <div class="row"> <div class="col-6 col-md-6"> <p>Diese Seite wurde zu Testzwecken für das Projekt <strong>Loanbroaker Business Integration</strong>
       erstellt.<br>Als Projekt für ein Modul der <a
@@ -130,43 +194,3 @@ foreach ($pdo->query($sql) as $user) {
 <script src="bootstrap/js/bootstrap.min.js" rel="stylesheet"></script>
 
 </html>
-
-<?php
-
-// sendet die Daten nach der Eingabe und dem Absenden an die REST_API im JSON format.
-if (isset($_GET["request"])) {
-    $laufzeit = $_POST['laufzeit'];
-    $summe = $_POST['summe'];
-    $array = ['request'=>['laufzeit' => $laufzeit, 'summe' => $summe]];
-    $userinfo =array_merge($userinfo, $array);
-
-    $curl = curl_init();
-
-    curl_setopt_array($curl, [
-        CURLOPT_PORT => "7800",
-        CURLOPT_URL => "http://127.0.0.1:7800/restapi/v1/request",
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_ENCODING => "",
-        CURLOPT_MAXREDIRS => 10,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        CURLOPT_CUSTOMREQUEST => "POST",
-        CURLOPT_POSTFIELDS => json_encode($userinfo),
-        CURLOPT_HTTPHEADER => [
-            "accept: application/json",
-            "content-type: application/json",
-        ],
-    ]);
-
-    $response = curl_exec($curl);
-    $err = curl_error($curl);
-
-    curl_close($curl);
-
-    if ($err) {
-        echo "cURL Error #:" . $err;
-    } else {
-        echo $response;
-    }
-}
-?>
