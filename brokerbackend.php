@@ -103,6 +103,8 @@ foreach ($pdo->query($sql) as $user) {
     </form></div>
   <div class="row" style= "margin-top:5em">
   <h3>Eingegangene Angebote <?php echo date('d.m.Y') ?> </h3>
+  <div style="margin:1%">
+  <input style="float:right" value="Angebote anzeigen" class="btn btn-outline-primary" type="button" id="refresh"/> </div>
   <span class="border border-1"> <div id="myid" class="col-12" style="padding:2em">
 
 <!--ENDE BODY-->
@@ -143,29 +145,6 @@ if (isset($_GET["request"])) {
 if ($err) {
     echo "cURL Error #:" . $err;
 } else {
-
-    $offers = [];
-    $sql = 'SELECT RID FROM requests where USERID =  ' . $userid;
-    foreach ($pdo->query($sql) as $request) {
-      foreach ($request as $RID => $value) {
-        $offers[]= $value;
-      }  
-      
-    }
-    $offers =array_unique($offers);
-
-    date_default_timezone_set("Europe/Berlin");
-   
-    $week = date("Ymd", strtotime($date . ' - 7 days'));
-    foreach ($offers as $value) {
-     $sql = 'SELECT * FROM offers join requests using (RID) WHERE RID = '. $value .' AND DATUM >=' . $week ;
-     foreach ($pdo->query($sql) as $offering) {
-        
-          $angebote[]= $offering;
- 
-      }
-    }
-
     ?>
 <div id="Datenbankangebote">
 <table class="table">
@@ -189,21 +168,6 @@ if (!$info['pretransfer_time']) {
     } else {
         //echo $response;
         $responsevalues = json_decode($response);
-
-        $sum = $responsevalues->request->summe;
-        if ($sum == null) {
-            echo "Warten auf Nachrichten";
-        } else {
-            ?><div id="container" style="border:solid; border-radius:2em; padding:2em; border-witdh:0.5em" >
-        <?php
-            echo "Guten Tag " . '<b>' . $responsevalues->customer->Vorname . " " . $responsevalues->customer->Nachname . '</b>' . " es liegt ein Angebot für Sie vor zu den von Ihnen gewünschten Positionen: " . '</br>';
-            echo "Einer Laufzeit von " . '<b>' . $responsevalues->request->laufzeit . '</b>' . " Monaten " . '</br>';
-            echo "und einer Summe von " . '<b>' . $responsevalues->request->summe . '</b>' . " €" . '</br>';
-            echo "zu einem Zinsatz von " . '<b>' . round($responsevalues->customer->Schufa, 2) . '</b>' . "%" . '</br>';
-            ?>
-            </div>
-            <?php
-}
     }
     curl_close($curl);
 }
@@ -241,64 +205,69 @@ if (!$info['pretransfer_time']) {
 </footer>
 <script src="bootstrap/js/bootstrap.min.js" rel="stylesheet"></script>
 <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
-<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
-
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
 <script>
 jQuery(function($){
 $(document).ready(function(){
 
   var id = <?php echo $userid ?>;
-
-  console.log(id);
-  $.post("database.php",{
+  $('#refresh').click(function(){
+    $('#refresh').attr('value', 'Angebote aktualisieren');
+    $(".table").find('tbody').empty()
+    $.post("database.php",{
     id
   }, function(data, status){
-    console.log("Hat geklappt")
-  });
+    var sqlreturnvalues = $.parseJSON(data)
 
-  var object = <?php echo json_encode($userinfo); ?>;
-  var arrayFromPHP = <?php echo json_encode($angebote); ?>;
-console.log(arrayFromPHP)
-arrayFromPHP.forEach(element => {
-  
-    var OID = element['OID'];
-    var Bank = element['BANK'];
-    var Sum = element['Summe'];
-    var Lauf = element['laufzeit'];
-    var Proz = element['Prozentsatz'];
-    var datum = element['datum'];
-    
+   sqlreturnvalues.forEach(element => {
 
-    $(".table").find('tbody')
-    .append($('<tr>')
-        .append($('<th scope="row" >')
-                .append((OID)
+  var OID = element['OID'];
+  var Bank = element['BANK'];
+  var Sum = element['Summe'];
+  var Lauf = element['laufzeit'];
+  var Proz = element['Prozentsatz'];
+  var datum = element['datum'];
+
+
+  $(".table").find('tbody')
+  .append($('<tr>')
+      .append($('<th scope="row" >')
+              .append((OID)
+              )
+          )
+          .append($('<td>')
+              .append((Bank)
                 )
-            )
-            .append($('<td>')
-                .append((Bank)
-                  )
-            )
-            .append($('<td>')
-                .append((Sum)
-                  )
-            )
-            .append($('<td>')
-                .append((Lauf)
-                  )
-            )
-            .append($('<td>')
-                .append((Proz)
-                  )
-            )
-            .append($('<td>')
-                .append((datum)
-                  )
-            )
-    );
+          )
+          .append($('<td>')
+              .append((Sum)
+                )
+          )
+          .append($('<td>')
+              .append((Lauf)
+                )
+          )
+          .append($('<td>')
+              .append((Proz)
+                )
+          )
+          .append($('<td>')
+              .append((datum)
+                )
+          )
+  );
 
 });
+
+  });
+
+
+
+
+  })
+
+ 
+
   })})
 </script>
 </html>
