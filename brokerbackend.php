@@ -3,7 +3,7 @@
 $user = 'root';
 $pass = 'root';
 $userinfo = [];
-
+$angebote = [];
 $response;
 
 session_start();
@@ -32,7 +32,6 @@ foreach ($pdo->query($sql) as $user) {
 ?>
 <!DOCTYPE html>
 <html>
-
 <head>
   <!--Sources-->
   <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -77,13 +76,13 @@ foreach ($pdo->query($sql) as $user) {
   <div class="row" >
     <div class="col-sm-6 col-md-5 col-lg-6"></div>
     <div class="col-sm-6 col-md-5 offset-md-2 col-lg-6 offset-lg-0" >
-        <form action="?request=1" method="post">
+        <form id="meineid" action="?request=1" method="post">
             <div class="row" style="margin-top:1em">
             <div class="col-6 col-sm-3">
             <label>Laufzeit:</label>
             </div>
             <div class="col-6 col-sm-3">
-            <input class="form-control" style="width:10em;" type="number"placeholder="12 Monate" name="laufzeit" max="36">
+            <input class="form-control" id="laufzeit" style="width:10em;" type="number"placeholder="12 Monate" name="laufzeit" max="36">
             </div>
             </div>
             <div class="row" style="margin-top:1em">
@@ -98,21 +97,15 @@ foreach ($pdo->query($sql) as $user) {
             <div class="col-6 col-sm-3">
             </div>
             <div class="col-6 col-sm-3" >
-            <input class="btn btn-outline-primary" type="submit" value="Anfragen">
+            <input id="submit"class="btn btn-outline-primary" type="submit" value="Anfragen">
             </div>
             </div>
     </form></div>
   <div class="row" style= "margin-top:5em">
-  <h3>Eingegangene Angebote</h3>
-  <span class="border border-1"> <div class="col-4" style="padding:2em">
-  
-     
-  
-
+  <h3>Eingegangene Angebote <?php echo date('d.m.Y') ?> </h3>
+  <span class="border border-1"> <div id="myid" class="col-12" style="padding:2em">
 
 <!--ENDE BODY-->
-
-
 
 <?php
 
@@ -126,10 +119,9 @@ if (isset($_GET["request"])) {
 
     curl_setopt_array($curl, [
         CURLOPT_PORT => "8081",
-        CURLOPT_URL => "http://127.0.0.1:8081/api",
+        CURLOPT_URL => "http://127.0.0.1:8081/v1/api",
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_ENCODING => "",
-//CURLOPT_COOKIE, session_name() . '=' . session_id(),
         CURLOPT_MAXREDIRS => 10,
         CURLOPT_TIMEOUT => 30,
         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
@@ -144,36 +136,81 @@ if (isset($_GET["request"])) {
 
     $response = curl_exec($curl);
     $err = curl_error($curl);
+    $info = curl_getinfo($curl);
 
-    curl_close($curl);
+}
 
-    if ($err) {
-        echo "cURL Error #:" . $err;
+if ($err) {
+    echo "cURL Error #:" . $err;
+} else {
+
+    $offers = [];
+    $sql = 'SELECT RID FROM requests where USERID =  ' . $userid;
+    foreach ($pdo->query($sql) as $request) {
+      foreach ($request as $RID => $value) {
+        $offers[]= $value;
+      }  
+      
+    }
+    $offers =array_unique($offers);
+
+    date_default_timezone_set("Europe/Berlin");
+   
+    $week = date("Ymd", strtotime($date . ' - 7 days'));
+    foreach ($offers as $value) {
+     $sql = 'SELECT * FROM offers join requests using (RID) WHERE RID = '. $value .' AND DATUM >=' . $week ;
+     foreach ($pdo->query($sql) as $offering) {
+        
+          $angebote[]= $offering;
+ 
+      }
+    }
+
+    ?>
+<div id="Datenbankangebote">
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">OrderID</th>
+      <th scope="col">Bank</th>
+      <th scope="col">Summe</th>
+      <th scope="col">Laufzeit (Mon)</th>
+      <th scope="col">Zinsatz %</th>
+      <th scope="col">Datum der Anfrage</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+</div>
+<?php
+if (!$info['pretransfer_time']) {
+//        echo "Warten auf Nachrichten";
     } else {
         //echo $response;
         $responsevalues = json_decode($response);
 
-        
-        echo "Guten Tag Herr ".'<b>'. $responsevalues->customer->Vorname . " " .$responsevalues->customer->Nachname .'</b>' .  " es liegt ein Angebot für Sie vor zu den von Ihnen gewünschten Positionen: ".'</br>';
-        echo "Einer Laufzeit von " . '<b>'. $responsevalues->request->laufzeit . '</b>'." Monaten ". '</br>';
-        echo "und einer Summe von " .'<b>'. $responsevalues->request->summe . '</b>'. " €".'</br>';
-        echo "zu einem Zinsatz von " .'<b>'. round( $responsevalues->customer->Schufa, 2) . '</b>'.  "%".'</br>';
-
-      
-
- 
-        
-
-       
-        
-    }
-
+        $sum = $responsevalues->request->summe;
+        if ($sum == null) {
+            echo "Warten auf Nachrichten";
+        } else {
+            ?><div id="container" style="border:solid; border-radius:2em; padding:2em; border-witdh:0.5em" >
+        <?php
+            echo "Guten Tag " . '<b>' . $responsevalues->customer->Vorname . " " . $responsevalues->customer->Nachname . '</b>' . " es liegt ein Angebot für Sie vor zu den von Ihnen gewünschten Positionen: " . '</br>';
+            echo "Einer Laufzeit von " . '<b>' . $responsevalues->request->laufzeit . '</b>' . " Monaten " . '</br>';
+            echo "und einer Summe von " . '<b>' . $responsevalues->request->summe . '</b>' . " €" . '</br>';
+            echo "zu einem Zinsatz von " . '<b>' . round($responsevalues->customer->Schufa, 2) . '</b>' . "%" . '</br>';
+            ?>
+            </div>
+            <?php
 }
-?>
+    }
+    curl_close($curl);
+}
+?></div>
 
 </div></span>
  </div>
-
 </body>
 <footer class="footer">
   <div class="row"> <div class="col-6 col-md-6"> <p>Diese Seite wurde zu Testzwecken für das Projekt <strong>Loanbroaker Business Integration</strong>
@@ -190,7 +227,78 @@ if (isset($_GET["request"])) {
     </ul></div>
    <div class="col-6 col-md-2"><div class="upper"><a href="#">Back to top</a></div></div>
   </div>
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
+  <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto">Mitteilung</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      Eine neue Nachricht ist eingetroffen.
+    </div>
+  </div>
+</div>
 </footer>
 <script src="bootstrap/js/bootstrap.min.js" rel="stylesheet"></script>
+<script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+<script>
+jQuery(function($){
+$(document).ready(function(){
+
+  var id = <?php echo $userid ?>;
+
+  console.log(id);
+  $.post("database.php",{
+    id
+  }, function(data, status){
+    console.log("Hat geklappt")
+  });
+
+  var object = <?php echo json_encode($userinfo); ?>;
+  var arrayFromPHP = <?php echo json_encode($angebote); ?>;
+console.log(arrayFromPHP)
+arrayFromPHP.forEach(element => {
+  
+    var OID = element['OID'];
+    var Bank = element['BANK'];
+    var Sum = element['Summe'];
+    var Lauf = element['laufzeit'];
+    var Proz = element['Prozentsatz'];
+    var datum = element['datum'];
+    
+
+    $(".table").find('tbody')
+    .append($('<tr>')
+        .append($('<th scope="row" >')
+                .append((OID)
+                )
+            )
+            .append($('<td>')
+                .append((Bank)
+                  )
+            )
+            .append($('<td>')
+                .append((Sum)
+                  )
+            )
+            .append($('<td>')
+                .append((Lauf)
+                  )
+            )
+            .append($('<td>')
+                .append((Proz)
+                  )
+            )
+            .append($('<td>')
+                .append((datum)
+                  )
+            )
+    );
+
+});
+  })})
+</script>
 </html>

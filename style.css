@@ -1,8 +1,12 @@
 
-
 img{
     max-width: 20em;
     height: 20em;
+}
+
+table {
+  table-layout: fixed;
+  word-wrap: break-word;
 }
 
 .footer{
